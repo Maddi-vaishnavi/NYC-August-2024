@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Page configuration
 st.set_page_config(page_title="🚖 NYC Green Taxi - Fare Predictor", layout="wide")
@@ -103,18 +105,37 @@ if submit:
             st.error(f"Prediction error: {e}")
 
 # -----------------------------
-# Actual vs Predicted Graph
+# 📊 Actual vs Predicted Graph (Scatter Plot)
 # -----------------------------
-st.subheader("📈 Actual vs Predicted Fare (on Sample Data)")
+st.subheader("📊 Actual vs Predicted Fare (on Sample Data)")
 
 @st.cache_data
 def load_sample_data():
     try:
-        df = pd.read_csv("sample_nyc_test_data.csv")  # Must contain 'actual_fare'
+        df = pd.read_csv("sample_nyc_test_data.csv")
         return df
     except FileNotFoundError:
-        st.warning("Sample test data file 'sample_nyc_test_data.csv' not found.")
-        return None
+        # Generate synthetic mock data
+        n = 50
+        df = pd.DataFrame({
+            'passenger_count': np.random.randint(1, 5, n),
+            'trip_distance': np.random.uniform(1, 10, n),
+            'extra': np.random.uniform(0, 3, n),
+            'mta_tax': np.full(n, 0.5),
+            'tip_amount': np.random.uniform(0, 5, n),
+            'tolls_amount': np.random.uniform(0, 5, n),
+            'improvement_surcharge': np.full(n, 0.3),
+            'congestion_surcharge': np.random.uniform(0, 2.5, n),
+            'trip_duration': np.random.uniform(5, 60, n),
+            'store_and_fwd_flag': np.random.randint(0, 2, n),
+            'RatecodeID': np.random.choice([1.0, 2.0, 3.0], n),
+            'payment_type': np.random.choice([1.0, 2.0, 3.0], n),
+            'trip_type': np.random.choice([1.0, 2.0], n),
+            'weekday': np.random.randint(0, 7, n),
+            'hour': np.random.randint(0, 24, n),
+        })
+        df["actual_fare"] = model.predict(df)
+        return df
 
 sample_data = load_sample_data()
 
@@ -129,10 +150,18 @@ if sample_data is not None and model is not None:
             "Predicted Fare": predicted
         })
 
-        st.line_chart(result_df)
+        # Scatter plot
+        st.markdown("### 🟢 Scatter Plot: Actual vs Predicted")
+        fig, ax = plt.subplots(figsize=(8, 6))
+        sns.scatterplot(x="Actual Fare", y="Predicted Fare", data=result_df, color="teal", s=80)
+        ax.plot([actual.min(), actual.max()], [actual.min(), actual.max()], 'r--')
+        ax.set_title("📍 Predicted vs Actual Taxi Fare")
+        ax.set_xlabel("Actual Fare")
+        ax.set_ylabel("Predicted Fare")
+        st.pyplot(fig)
 
         st.markdown("🔍 Preview of actual vs predicted fares:")
         st.dataframe(result_df.head(10))
 
     except Exception as e:
-        st.error(f"Error generating prediction chart: {e}")
+        st.error(f"Error generating scatter plot: {e}")
