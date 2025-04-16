@@ -11,15 +11,17 @@ st.set_page_config(page_title="🚖 NYC Green Taxi - Fare Predictor", layout="wi
 st.title("🚖 NYC Green Taxi Fare Predictor - August 2024")
 st.markdown("Predict the total fare of an NYC green taxi ride based on trip details using a trained Random Forest model.")
 
-# Load model
+
+import joblib
+
 @st.cache_resource
 def load_model():
     try:
-        with open("randomforest.pkl", "rb") as f:
-            return pickle.load(f)
+        return joblib.load("randomforest_compressed.pkl")
     except FileNotFoundError:
-        st.error("Model file not found. Please ensure 'randomforest.pkl' is available.")
+        st.error("Model file not found. Please ensure 'randomforest_compressed.pkl' is available.")
         return None
+
 
 model = load_model()
 if model is None:
